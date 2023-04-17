@@ -5,18 +5,24 @@ import (
 	"net/http"
 
 	"github.com/andey-robins/bookshop-go/db"
+	"github.com/andey-robins/bookshop-go/validate"
 	"github.com/gin-gonic/gin"
 )
 
 type Order struct {
-	CustomerId int  `json:"customerId"`
-	BookId     int  `json:"bookId"`
+	CustomerId int  `json:"customerId" validate:"required"`
+	BookId     int  `json:"bookId" validate:"required"`
 	Shipped    bool `json:"shipped"`
 }
 
 func CreateOrder(c *gin.Context) {
 	var json Order
 	if err := c.BindJSON(&json); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := validate.Validate(json); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -33,6 +39,11 @@ func CreateOrder(c *gin.Context) {
 func GetShipmentStatus(c *gin.Context) {
 	var json Order
 	if err := c.BindJSON(&json); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := validate.Validate(json); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -59,11 +70,18 @@ func ShipOrder(c *gin.Context) {
 		return
 	}
 
-	pid, err := db.GetPOByContents(json.BookId, json.CustomerId)
-	if err != nil {
+	if err := validate.Validate(json); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+
+	pid, err := db.GetPOByContents(json.BookId, json.CustomerId)
+	if err != nil {
+		fmt.Println("ERROR")
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Println(pid)
 
 	err = db.ShipPO(pid)
 	if err != nil {
@@ -77,6 +95,11 @@ func ShipOrder(c *gin.Context) {
 func GetOrderStatus(c *gin.Context) {
 	var json Order
 	if err := c.BindJSON(&json); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := validate.Validate(json); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
